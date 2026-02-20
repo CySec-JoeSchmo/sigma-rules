@@ -1,0 +1,44 @@
+title: StealC Information Stealer Process Injection into Svchost
+id: c9d0e1f2-3456-7890-12cd-ef1234567890
+status: experimental
+description: |
+  Detects StealC information stealer injecting into legitimate Windows processes (svchost.exe) as part of ClickFix infection chain.
+  The malware uses process injection to run under the identity of a legitimate Windows service for evasion.
+references:
+  - https://www.levelblue.com/blogs/spiderlabs-blog/how-clickfix-opens-the-door-to-stealthy-stealc-information-stealer
+  - https://www.malware-traffic-analysis.net/2025/06/18/index.html
+author: CySec_JoeSchmo
+date: 2026-02-16
+tags:
+  - attack.defense_evasion
+  - attack.t1055        # Process Injection
+  - attack.credential_access
+  - attack.t1555.003    # Credentials from Web Browsers
+logsource:
+  category: process_access
+  product: windows
+detection:
+  selection_process_injection:
+    TargetImage|endswith: '\svchost.exe'
+    GrantedAccess:
+      - '0x1FFFFF'
+      - '0x1F3FFF'
+      - '0x143A'
+      - '0x1438'
+    SourceImage|endswith:
+      - '\powershell.exe'
+      - '\cmd.exe'
+      - '\rundll32.exe'
+  
+  selection_memory_allocation:
+    CallTrace|contains:
+      - 'VirtualAllocEx'
+      - 'WriteProcessMemory'
+      - 'CreateRemoteThread'
+  
+  condition: selection_process_injection or selection_memory_allocation
+falsepositives:
+  - Legitimate administrative tools
+  - Security software
+  - System management utilities
+level: high

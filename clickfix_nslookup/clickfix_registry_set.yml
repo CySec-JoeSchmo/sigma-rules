@@ -1,0 +1,33 @@
+title: ClickFix DNS Hijacking and Configuration Modification
+id: b8c9d0e1-2345-6789-01bc-def123456789
+status: experimental
+description: |
+  Detects ClickFix attacks that trick users into manually modifying their DNS settings or network configuration.
+  These attacks instruct victims to change DNS server addresses to attacker-controlled infrastructure, enabling persistent traffic interception and malware delivery.
+references:
+  - https://www.webpronews.com/inside-clickfixs-dangerous-new-playbook-how-hackers-are-hijacking-dns-settings-to-silently-install-malware/
+  - https://cybersecuritynews.com/new-clickfix-attack-uses-dns-hijacking/
+author: CySec_JoeSchmo
+date: 2026-02-16
+tags:
+  - attack.persistence
+  - attack.t1098        # Account Manipulation
+  - attack.t1557.001    # Man-in-the-Middle: LLMNR/NBT-NS Poisoning
+  - attack.defense_evasion
+logsource:
+  product: windows
+  category: registry_set
+detection:
+  selection_dns_registry:
+    TargetObject|contains:
+      - '\System\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\'
+      - '\NameServer'
+      - '\DhcpNameServer'
+    Details|re: '^(?!8\.8\.8\.8|8\.8\.4\.4|1\.1\.1\.1|1\.0\.0\.1|9\.9\.9\.9).*'
+  
+  condition: selection_dns_registry
+falsepositives:
+  - Legitimate DNS configuration changes by IT administrators
+  - VPN client configurations
+  - Network troubleshooting activities
+level: medium
