@@ -67,7 +67,7 @@ jobs:
       # ── 9. Compile rules to Splunk SPL ────────────────────────────────────
       - name: Compile rules → Splunk SPL
         run: |
-          sigma convert -t splunk rules/ -o /tmp/output_splunk.txt
+          sigma convert -t splunk --without-pipeline rules/ -o /tmp/output_splunk.txt
           echo "Splunk compilation successful"
 
       # ── 10. Record Splunk compile duration ───────────────────────────────
@@ -87,7 +87,7 @@ jobs:
       # ── 12. Compile rules to Elasticsearch ───────────────────────────────
       - name: Compile rules → Elasticsearch
         run: |
-          sigma convert -t elasticsearch rules/ -o /tmp/output_es.txt
+          sigma convert -t elasticsearch --without-pipeline rules/ -o /tmp/output_es.txt
           echo "Elasticsearch compilation successful"
 
       # ── 13. Record Elasticsearch compile duration ─────────────────────────
