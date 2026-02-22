@@ -1,0 +1,137 @@
+name: Sigma Rule Validation
+
+# Trigger on every push (commit) to any branch in the repository.
+# We deliberately avoid 'pull_request' here to keep things simple
+# and fire on every commit regardless of whether a PR is open.
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  validate:
+    name: Validate & Compile Sigma Rules
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # ── 1. Checkout the code ──────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Set up Python ──────────────────────────────────────────────────
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # ── 3. Cache pip dependencies to speed up repeat runs ─────────────────
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-sigma
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      # ── 4. Install sigma-cli and SIEM backends ────────────────────────────
+      - name: Install sigma-cli and backends
+        run: |
+          pip install sigma-cli
+          pip install pysigma-backend-splunk
+          pip install pysigma-backend-elasticsearch
+
+      # ── 5. Record start time for the validation step ──────────────────────
+      - name: Record validation start time
+        id: validate_start
+        run: echo "start=$(date +%s)" >> $GITHUB_OUTPUT
+
+      # ── 6. Validate rule syntax and schema ────────────────────────────────
+      - name: Validate rule syntax
+        run: sigma check rules/
+
+      # ── 7. Record how long validation took ────────────────────────────────
+      - name: Record validation duration
+        id: validate_duration
+        run: |
+          end=$(date +%s)
+          duration=$((end - ${{ steps.validate_start.outputs.start }}))
+          echo "duration=${duration}s" >> $GITHUB_OUTPUT
+          echo "✅ Syntax validation completed in ${duration}s"
+
+      # ── 8. Record start time for Splunk compilation ───────────────────────
+      - name: Record Splunk compile start time
+        id: splunk_start
+        run: echo "start=$(date +%s)" >> $GITHUB_OUTPUT
+
+      # ── 9. Compile rules to Splunk SPL ────────────────────────────────────
+      - name: Compile rules → Splunk SPL
+        run: |
+          sigma convert -t splunk rules/ -o /tmp/output_splunk.txt
+          echo "Splunk compilation successful"
+
+      # ── 10. Record Splunk compile duration ───────────────────────────────
+      - name: Record Splunk compile duration
+        id: splunk_duration
+        run: |
+          end=$(date +%s)
+          duration=$((end - ${{ steps.splunk_start.outputs.start }}))
+          echo "duration=${duration}s" >> $GITHUB_OUTPUT
+          echo "✅ Splunk compilation completed in ${duration}s"
+
+      # ── 11. Record start time for Elasticsearch compilation ───────────────
+      - name: Record Elasticsearch compile start time
+        id: es_start
+        run: echo "start=$(date +%s)" >> $GITHUB_OUTPUT
+
+      # ── 12. Compile rules to Elasticsearch ───────────────────────────────
+      - name: Compile rules → Elasticsearch
+        run: |
+          sigma convert -t elasticsearch rules/ -o /tmp/output_es.txt
+          echo "Elasticsearch compilation successful"
+
+      # ── 13. Record Elasticsearch compile duration ─────────────────────────
+      - name: Record Elasticsearch compile duration
+        id: es_duration
+        run: |
+          end=$(date +%s)
+          duration=$((end - ${{ steps.es_start.outputs.start }}))
+          echo "duration=${duration}s" >> $GITHUB_OUTPUT
+          echo "✅ Elasticsearch compilation completed in ${duration}s"
+
+      # ── 14. Write a build timing summary ─────────────────────────────────
+      # This surfaces directly in the GitHub Actions UI under the
+      # "Summary" tab of each workflow run — no digging through logs needed.
+      - name: Write build timing summary
+        run: |
+          echo "## 🕐 Build Timing Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Step | Duration |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|----------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Sigma Syntax Validation | ${{ steps.validate_duration.outputs.duration }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Splunk SPL Compilation  | ${{ steps.splunk_duration.outputs.duration }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Elasticsearch Compile   | ${{ steps.es_duration.outputs.duration }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "_Triggered by commit \`${{ github.sha }}\` on branch \`${{ github.ref_name }}\`_" >> $GITHUB_STEP_SUMMARY
+
+      # ── 15. Save timing data as a downloadable artifact ──────────────────
+      # This creates a persistent log you can download and compare across
+      # runs to spot build time regressions over time.
+      - name: Save timing artifact
+        run: |
+          mkdir -p timing-reports
+          echo "Commit: ${{ github.sha }}" > timing-reports/build-timing.txt
+          echo "Branch: ${{ github.ref_name }}" >> timing-reports/build-timing.txt
+          echo "Run ID: ${{ github.run_id }}" >> timing-reports/build-timing.txt
+          echo "Timestamp: $(date -u)" >> timing-reports/build-timing.txt
+          echo "---" >> timing-reports/build-timing.txt
+          echo "Sigma Validation:       ${{ steps.validate_duration.outputs.duration }}" >> timing-reports/build-timing.txt
+          echo "Splunk Compilation:     ${{ steps.splunk_duration.outputs.duration }}" >> timing-reports/build-timing.txt
+          echo "Elasticsearch Compile:  ${{ steps.es_duration.outputs.duration }}" >> timing-reports/build-timing.txt
+
+      - name: Upload timing artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-timing-${{ github.sha }}
+          path: timing-reports/
+          retention-days: 90
