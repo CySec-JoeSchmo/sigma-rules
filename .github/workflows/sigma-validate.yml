@@ -85,10 +85,10 @@ jobs:
         run: echo "start=$(date +%s)" >> $GITHUB_OUTPUT
 
       # ── 12. Compile rules to Elasticsearch ───────────────────────────────
-      - name: Compile rules → Elasticsearch
+      - name: Compile rules → Elasticsearch (Lucene)
         run: |
-          sigma convert -t elasticsearch --without-pipeline rules/ -o /tmp/output_es.txt
-          echo "Elasticsearch compilation successful"
+          sigma convert -t lucene --without-pipeline rules/ -o /tmp/output_lucene.txt
+          echo "Lucene compilation successful"
 
       # ── 13. Record Elasticsearch compile duration ─────────────────────────
       - name: Record Elasticsearch compile duration
@@ -110,7 +110,7 @@ jobs:
           echo "|------|----------|" >> $GITHUB_STEP_SUMMARY
           echo "| Sigma Syntax Validation | ${{ steps.validate_duration.outputs.duration }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Splunk SPL Compilation  | ${{ steps.splunk_duration.outputs.duration }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Elasticsearch Compile   | ${{ steps.es_duration.outputs.duration }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Lucene Compilation      | ${{ steps.es_duration.outputs.duration }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "_Triggered by commit \`${{ github.sha }}\` on branch \`${{ github.ref_name }}\`_" >> $GITHUB_STEP_SUMMARY
 
@@ -127,7 +127,7 @@ jobs:
           echo "---" >> timing-reports/build-timing.txt
           echo "Sigma Validation:       ${{ steps.validate_duration.outputs.duration }}" >> timing-reports/build-timing.txt
           echo "Splunk Compilation:     ${{ steps.splunk_duration.outputs.duration }}" >> timing-reports/build-timing.txt
-          echo "Elasticsearch Compile:  ${{ steps.es_duration.outputs.duration }}" >> timing-reports/build-timing.txt
+          echo "Lucene Compilation:     ${{ steps.es_duration.outputs.duration }}" >> timing-reports/build-timing.txt
 
       - name: Upload timing artifact
         uses: actions/upload-artifact@v4
