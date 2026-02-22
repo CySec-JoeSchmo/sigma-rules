@@ -1,0 +1,101 @@
+title: ClickFix Social Engineering Attack Delivering StealC Information Stealer
+id: a7b8c9d0-1234-5678-90ab-cdef12345678
+status: experimental
+description: |
+  Detects ClickFix social engineering campaigns that trick users into executing malicious commands to deploy StealC information stealer.
+  This includes both traditional PowerShell-based attacks and the new DNS-based variant using nslookup commands.
+  ClickFix attacks use fake CAPTCHA pages or error messages on compromised websites to manipulate users into manually running malicious commands.
+references:
+  - https://www.levelblue.com/blogs/spiderlabs-blog/how-clickfix-opens-the-door-to-stealthy-stealc-information-stealer
+  - https://www.bleepingcomputer.com/news/security/new-clickfix-attack-abuses-nslookup-to-retrieve-powershell-payload-via-dns/
+  - https://thehackernews.com/2026/02/microsoft-discloses-dns-based-clickfix.html
+  - https://www.sophos.com/en-us/blog/i-am-not-a-robot-clickfix-used-to-deploy-stealc-and-qilin
+author: CySec_JoeSchmo
+date: 2026-02-16
+modified: 2026-02-16
+tags:
+  - attack.execution
+  - attack.t1059.001  # PowerShell
+  - attack.t1071.004  # DNS
+  - attack.defense_evasion
+  - attack.t1027        # Obfuscated Files or Information
+  - attack.t1055        # Process Injection
+  - attack.credential_access
+  - attack.t1555        # Credentials from Password Stores
+  - attack.collection
+  - attack.t1005        # Data from Local System
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_powershell_iex:
+    - CommandLine|contains|all:
+        - 'powershell'
+        - 'iex'
+        - 'Net.WebClient'
+    - CommandLine|contains|all:
+        - 'powershell'
+        - 'DownloadString'
+        - 'http'
+    - CommandLine|contains|all:
+        - 'powershell'
+        - 'IEX'
+        - 'Invoke-Expression'
+  
+  selection_powershell_base64:
+    CommandLine|contains|all:
+      - 'powershell'
+      - '-enc'
+    CommandLine|contains:
+      - 'JAB'
+      - 'SUVYI'
+      - 'SQBFAFgA'
+      - 'aQBlAHgA'
+  
+  selection_donut_shellcode:
+    CommandLine|contains|all:
+      - 'powershell'
+      - '[System.Runtime.InteropServices.Marshal]'
+      - 'VirtualAlloc'
+  
+  selection_reflection_load:
+    CommandLine|contains|all:
+      - 'powershell'
+      - '[Reflection.Assembly]::Load'
+      - 'DownloadData'
+  
+  selection_dns_nslookup:
+    - CommandLine|contains|all:
+        - 'cmd'
+        - 'nslookup'
+        - 'powershell'
+    - CommandLine|re: '.*nslookup.*-type=txt.*\|.*powershell.*'
+    - CommandLine|contains|all:
+        - 'nslookup'
+        - '-querytype'
+        - 'iex'
+  
+  selection_process_svchost:
+    ParentImage|endswith: '\powershell.exe'
+    Image|endswith: '\svchost.exe'
+    CommandLine|contains: '-k'
+  
+  selection_stealc_indicators:
+    - CommandLine|contains:
+        - 'cptchbuild'
+        - 'cptoptious'
+        - 'goveanrs'
+    - Image|endswith: '\mfpmp.exe'
+      CommandLine|contains: 'rtworkq.dll'
+  
+  filter_legitimate:
+    CommandLine|contains:
+      - 'Windows\System32\svchost.exe -k'
+      - 'Microsoft.PowerShell.Core'
+  
+  condition: (selection_powershell_iex or selection_powershell_base64 or selection_donut_shellcode or selection_reflection_load or selection_dns_nslookup or selection_stealc_indicators) and not filter_legitimate
+falsepositives:
+  - Legitimate administrative scripts using PowerShell
+  - Network troubleshooting activities using nslookup
+  - Legitimate remote management tools
+level: high

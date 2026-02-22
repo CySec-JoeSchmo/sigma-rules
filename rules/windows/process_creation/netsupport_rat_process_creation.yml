@@ -1,0 +1,43 @@
+title: NetSupport RAT Deployment via ClickFix
+id: e1f2g3h4-5678-9012-34ef-123456789012
+status: experimental
+description: |
+  Detects deployment of NetSupport Manager (legitimate remote access tool) being used as RAT via ClickFix campaigns.
+  ClickFix attacks often deploy NetSupport RAT as an initial access vector before delivering StealC stealer.
+references:
+  - https://www.sophos.com/en-us/blog/i-am-not-a-robot-clickfix-used-to-deploy-stealc-and-qilin
+  - https://www.malware-traffic-analysis.net/2025/06/18/index.html
+author: CySec_JoeSchmo
+date: 2026-02-16
+tags:
+  - attack.execution
+  - attack.t1569.002    # Service Execution
+  - attack.persistence
+  - attack.t1547.001    # Registry Run Keys / Startup Folder
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_netsupport_exec:
+    Image|endswith: '\client32.exe'
+    CommandLine|contains:
+      - 'C:\ProgramData\'
+  
+  selection_batch_download:
+    CommandLine|contains|all:
+      - '.bat'
+      - 'ProgramData'
+      - '.zip'
+  
+  selection_registry_persistence:
+    TargetObject|contains:
+      - '\SOFTWARE\Microsoft\Windows\CurrentVersion\Run'
+    Details|contains:
+      - 'client32.exe'
+      - 'NetSupport'
+  
+  condition: selection_netsupport_exec or selection_batch_download or selection_registry_persistence
+falsepositives:
+  - Legitimate NetSupport Manager installations
+  - IT support tools
+level: high

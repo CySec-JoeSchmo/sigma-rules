@@ -1,0 +1,45 @@
+title: StealC C2 Communication Pattern
+id: d0e1f2g3-4567-8901-23de-f12345678901
+status: experimental
+description: |
+  Detects network communication patterns associated with StealC information stealer command-and-control traffic.
+  StealC uses HTTP POST requests with RC4 and Base64 encryption to exfiltrate stolen data.
+references:
+  - https://www.levelblue.com/blogs/spiderlabs-blog/how-clickfix-opens-the-door-to-stealthy-stealc-information-stealer
+  - https://www.malware-traffic-analysis.net/2025/06/18/index.html
+author: CySec_JoeSchmo
+date: 2026-02-16
+tags:
+  - attack.command_and_control
+  - attack.t1071.001    # Web Protocols
+  - attack.exfiltration
+  - attack.t1041        # Exfiltration Over C2 Channel
+logsource:
+  category: proxy
+  product: windows
+detection:
+  selection_http_pattern:
+    c-uri-extension: '.php'
+    cs-method: 'POST'
+    c-useragent|contains:
+      - 'Mozilla/5.0'
+  
+  selection_suspicious_uri:
+    c-uri|contains:
+      - '/fakeurl.htm'
+      - '.php'
+    cs-bytes: '>1024'
+  
+  selection_known_iocs:
+    r-dns:
+      - 'cptoptious.com'
+      - 'goveanrs.org'
+      - '2beinflow.com'
+      - 'aquafestonline.com'
+      - 'azwsappdev.com'
+  
+  condition: (selection_http_pattern and selection_suspicious_uri) or selection_known_iocs
+falsepositives:
+  - Legitimate web traffic
+  - Content delivery networks
+level: medium

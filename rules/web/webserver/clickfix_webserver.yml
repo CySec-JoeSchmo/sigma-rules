@@ -1,0 +1,38 @@
+title: ClickFix Fake CAPTCHA JavaScript Injection Detection
+id: f2g3h4i5-6789-0123-45fg-234567890123
+status: experimental
+description: |
+  Detects malicious JavaScript injection patterns associated with ClickFix fake CAPTCHA pages.
+  These scripts are injected into compromised websites to display fraudulent verification prompts.
+references:
+  - https://www.levelblue.com/blogs/spiderlabs-blog/how-clickfix-opens-the-door-to-stealthy-stealc-information-stealer
+  - https://cybersecuritynews.com/new-clickfix-attack-wave-targeting-windows-systems/
+author: CySec_JoeSchmo
+date: 2026-02-16
+tags:
+  - attack.initial_access
+  - attack.t1189        # Drive-by Compromise
+  - attack.t1204.001    # User Execution: Malicious Link
+logsource:
+  category: webserver
+detection:
+  selection_script_injection:
+    c-uri|contains:
+      - '/jsrepo'
+      - 'index.php'
+    c-uri-query|contains:
+      - 'captcha'
+      - 'verify'
+      - 'cloudflare'
+  
+  selection_suspicious_domains:
+    r-dns|contains:
+      - 'cptoptious'
+      - 'goveanrs'
+      - 'aquafestonline'
+  
+  condition: selection_script_injection or selection_suspicious_domains
+falsepositives:
+  - Legitimate CAPTCHA services
+  - Cloudflare protection pages
+level: medium
