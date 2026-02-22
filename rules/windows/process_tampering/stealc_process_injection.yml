@@ -10,10 +10,8 @@ references:
 author: CySec_JoeSchmo
 date: 2026-02-16
 tags:
-  - attack.defense_evasion
-  - attack.t1055        # Process Injection
-  - attack.credential_access
-  - attack.t1555.003    # Credentials from Web Browsers
+  - attack.t1055      # Process Injection
+  - attack.t1555.003  # Credentials from Web Browsers
 logsource:
   category: process_access
   product: windows

@@ -1,5 +1,5 @@
 title: ClickFix Fake CAPTCHA JavaScript Injection Detection
-id: f2g3h4i5-6789-0123-45fg-234567890123
+id: f2a3b4c5-6789-0123-45af-234567890123
 status: experimental
 description: |
   Detects malicious JavaScript injection patterns associated with ClickFix fake CAPTCHA pages.

@@ -1,5 +1,5 @@
 title: StealC C2 Communication Pattern
-id: d0e1f2g3-4567-8901-23de-f12345678901
+id: d0e1f2a3-4567-8901-23de-f12345678901
 status: experimental
 description: |
   Detects network communication patterns associated with StealC information stealer command-and-control traffic.

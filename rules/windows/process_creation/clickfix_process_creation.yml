@@ -17,13 +17,10 @@ tags:
   - attack.execution
   - attack.t1059.001  # PowerShell
   - attack.t1071.004  # DNS
-  - attack.defense_evasion
-  - attack.t1027        # Obfuscated Files or Information
-  - attack.t1055        # Process Injection
-  - attack.credential_access
-  - attack.t1555        # Credentials from Password Stores
-  - attack.collection
-  - attack.t1005        # Data from Local System
+  - attack.t1027      # Obfuscated Files or Information
+  - attack.t1055      # Process Injection
+  - attack.t1555      # Credentials from Password Stores
+  - attack.t1005      # Data from Local System
 logsource:
   category: process_creation
   product: windows
@@ -74,11 +71,6 @@ detection:
         - 'nslookup'
         - '-querytype'
         - 'iex'
-  
-  selection_process_svchost:
-    ParentImage|endswith: '\powershell.exe'
-    Image|endswith: '\svchost.exe'
-    CommandLine|contains: '-k'
   
   selection_stealc_indicators:
     - CommandLine|contains:

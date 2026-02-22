@@ -11,9 +11,8 @@ author: CySec_JoeSchmo
 date: 2026-02-16
 tags:
   - attack.persistence
-  - attack.t1098        # Account Manipulation
-  - attack.t1557.001    # Man-in-the-Middle: LLMNR/NBT-NS Poisoning
-  - attack.defense_evasion
+  - attack.t1098      # Account Manipulation
+  - attack.t1557.001  # Man-in-the-Middle: LLMNR/NBT-NS Poisoning
 logsource:
   product: windows
   category: registry_set
