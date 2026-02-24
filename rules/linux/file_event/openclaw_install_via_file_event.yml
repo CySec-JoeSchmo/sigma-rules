@@ -1,0 +1,36 @@
+title: OpenClaw (Clawdbot/Moltbot) Installation Detected
+id: 533ed154-8a0c-4740-a3a8-5d72cfb39be9
+status: experimental
+description: Detects OpenClaw AI agent installation. This tool has critical vulnerabilities (CVE-2026-25253, CVE-2026-25157) that expose systems to remote code execution. Default installs create an unauthenticated web interface on port 18789 and store credentials in plaintext.
+author: CySec_JoeSchmo
+date: 2026/02/11
+references:
+  - https://nvd.nist.gov/vuln/detail/CVE-2026-25253
+  - https://nvd.nist.gov/vuln/detail/CVE-2026-25157
+  - https://www.paloaltonetworks.com/blog/network-security/why-moltbot-may-signal-ai-crisis/
+tags:
+  - attack.execution
+  - attack.t1059.004
+  - attack.persistence
+  - attack.t1543.002
+  - attack.credential_access
+  - attack.t1552.001
+logsource:
+  product: linux
+  category: file_event
+detection:
+  selection:
+    TargetFilename|contains:
+      - '/.clawdbot'
+      - '/.moltbot'
+      - '/.openclaw'
+      - '/clawdbot-gateway'
+      - '/moltbot-gateway'
+      - '/openclaw-gateway'
+      - 'clawdbot.json'
+      - 'moltbot.json'
+      - 'openclaw.json'
+  condition: selection
+falsepositives:
+  - Legitimate installation by authorized personnel
+level: medium

@@ -57,7 +57,7 @@ jobs:
           end=$(date +%s)
           duration=$((end - ${{ steps.validate_start.outputs.start }}))
           echo "duration=${duration}s" >> $GITHUB_OUTPUT
-          echo "✅ Syntax validation completed in ${duration}s"
+          echo "Syntax validation completed in ${duration}s"
 
       # ── 8. Record start time for Splunk compilation ───────────────────────
       - name: Record Splunk compile start time
@@ -77,7 +77,7 @@ jobs:
           end=$(date +%s)
           duration=$((end - ${{ steps.splunk_start.outputs.start }}))
           echo "duration=${duration}s" >> $GITHUB_OUTPUT
-          echo "✅ Splunk compilation completed in ${duration}s"
+          echo "Splunk compilation completed in ${duration}s"
 
       # ── 11. Record start time for Elasticsearch compilation ───────────────
       - name: Record Elasticsearch compile start time
@@ -97,14 +97,14 @@ jobs:
           end=$(date +%s)
           duration=$((end - ${{ steps.es_start.outputs.start }}))
           echo "duration=${duration}s" >> $GITHUB_OUTPUT
-          echo "✅ Elasticsearch compilation completed in ${duration}s"
+          echo "Elasticsearch compilation completed in ${duration}s"
 
       # ── 14. Write a build timing summary ─────────────────────────────────
       # This surfaces directly in the GitHub Actions UI under the
       # "Summary" tab of each workflow run — no digging through logs needed.
       - name: Write build timing summary
         run: |
-          echo "## 🕐 Build Timing Report" >> $GITHUB_STEP_SUMMARY
+          echo "## Build Timing Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Step | Duration |" >> $GITHUB_STEP_SUMMARY
           echo "|------|----------|" >> $GITHUB_STEP_SUMMARY

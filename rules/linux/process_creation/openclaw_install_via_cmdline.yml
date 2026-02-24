@@ -1,0 +1,55 @@
+title: OpenClaw (Clawdbot/Moltbot) Installation via Command Line
+id: 6c49aa4f-0c12-4921-9092-9376d1510eca
+status: experimental
+description: Detects OpenClaw AI agent installation via command line. This tool has critical vulnerabilities (CVE-2026-25253, CVE-2026-25157) that expose systems to remote code execution. Default installs create an unauthenticated web interface on port 18789 and store credentials in plaintext.
+author: CySec_JoeSchmo
+date: 2026/02/11
+references:
+  - https://www.theregister.com/2026/01/27/clawdbot_moltbot_security_concerns/
+  - https://www.bitdefender.com/en-us/blog/hotforsecurity/moltbot-security-alert-exposed-clawdbot-control-panels-risk-credential-leaks-and-account-takeovers
+  - https://www.linkedin.com/posts/elishlomo_security-activity-7421867291459391490-a0B1
+  - https://www.securityjoes.com/post/hunting-openclaw-detection-and-containment-guidance-for-defenders
+tags:
+  - attack.execution
+  - attack.t1059.004
+  - attack.persistence
+  - attack.t1543.002
+  - attack.command_and_control
+  - attack.t1219
+logsource:
+  product: linux
+  category: process_creation
+detection:
+  selection_names:
+    CommandLine|contains:
+      - 'clawdbot'
+      - 'moltbot'
+  selection_onboard:
+    CommandLine|contains|all:
+      - 'onboard'
+      - '--install-daemon'
+  selection_gateway_run:
+    CommandLine|contains|all:
+      - 'gateway' #moltbot gateway --port 18789 --verbose
+      - '--port'
+      - '18789'
+  selection_npm_global_install:
+    CommandLine|contains|all:
+      - 'npm' #npm i -g openclaw
+      - ' i'
+      - '-g'
+      #- '@latest' #npm install -g moltbot@latest / npm install -g clawdbot@latest
+  selection_install_script:
+    - CommandLine|contains|all:
+      - 'curl'
+      - 'clawd.bot/install.sh'
+    - CommandLine|contains|all:
+      - 'curl'
+      - 'molt.bot/install.sh'
+    - CommandLine|contains|all:
+      - 'curl' #curl -fsSL https://openclaw.ai/install.sh | bash
+      - 'openclaw.ai/install.sh'
+  condition: selection_names and (selection_onboard or selection_gateway_run or selection_npm_global_install or selection_install_script)
+falsepositives:
+  - Legitimate installation/upgrade by administrators or developers.
+level: medium
